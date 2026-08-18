@@ -1,3 +1,10 @@
+/*
+ * This program is currently used as a sanity check for the UDP
+ * implementation. It verifies that the UDP socket can be created,
+ * bound, receive data, and send data back successfully.
+ *
+ * This will eventually be replaced by the main QUIC application.
+ */
 #include "quic/udp.h"
 
 #include <arpa/inet.h>
