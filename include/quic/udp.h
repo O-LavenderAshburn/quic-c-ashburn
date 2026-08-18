@@ -5,16 +5,16 @@
 #include <stdint.h>
 #include <sys/socket.h>
 
-typedef{
+typedef struct {
     int fd;
-}quic_udp_t;
+} quic_udp_t;
 
 int quic_udp_init(quic_udp_t *udp, uint16_t port);
 
 int quic_udp_send(
     quic_udp_t *udp,
-    cosnt uint8_t *data,
-    size_t  len,
+    const uint8_t *data,
+    size_t len,
     const struct sockaddr *dest,
     socklen_t dest_len
 );

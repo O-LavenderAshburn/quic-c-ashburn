@@ -12,39 +12,39 @@
  * The file descriptor returned by socket() identifies the socket
  * and is stored in the quic_udp_t structure for later operations.
  */
-int quic_udp_init(quic_udp_t *udp, uint16_t port){
+int quic_udp_init(quic_udp_t *udp, uint16_t port)
+{
+    udp->fd = socket(AF_INET, SOCK_DGRAM, 0);
 
-
-
-    udp -> fd = socket(AF_INET,SOCK_DGRAM,0);
-
-    if(udp-> <0){
+    if (udp->fd < 0) {
         perror("socket");
         return -1;
     }
 
-    struct sockaddr_in addr = {0}
+    struct sockaddr_in addr = {0};
+
     addr.sin_family = AF_INET;
-    addr.sin_port = port;
-    addr.sin_addr = INADDR_ANY
+    addr.sin_port = htons(port);
+    addr.sin_addr.s_addr = INADDR_ANY;
 
-    // Bind Socket to requested local port
-
-    if(bind(udp->fd, 
-        (struct sockaddr *)&addr,
-        sizeof(addr))< 0){
-            perror("bind");
-            close(udp->fd);
-            return -1
+    // Bind socket to requested local port
+    if (bind(udp->fd,
+             (struct sockaddr *)&addr,
+             sizeof(addr)) < 0) {
+        perror("bind");
+        close(udp->fd);
+        udp->fd = -1;
+        return -1;
     }
 
-    return 0;
+    printf("UDP socket fd=%d bound to port %u\n", udp->fd, port);
 
+    return 0;
 }
 
 int quic_udp_send(
     quic_udp_t *udp,
-    cosnt uint8_t *data,
+    const uint8_t *data,
     size_t  len,
     const struct sockaddr *dest,
     socklen_t dest_len){
