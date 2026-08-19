@@ -51,12 +51,9 @@ size_t WriteVarint(uint8_t *buf, size_t buf_len, uint64_t value) {
         return 0;  // value too large, or not enough room in buf
     }
 
-<<<<<<< HEAD
 
     // Writes `value` as big-endian bytes into buf, with the 2-bit length
     // marker (00/01/10/11) packed into the top of buf[0].
-=======
->>>>>>> 10d026d (quic/varint: Tested varint.)
     switch (length) {
         case 1:
             buf[0] = (uint8_t)value;
