@@ -152,30 +152,36 @@ typedef struct {
 }quic_conn_close_frame_t;
 
 typedef struct {
+    uint64_t stream_id;
+    uint64_t max_stream_data;
+} quic_stream_data_blocked_frame_t;
+
+typedef struct {
     // Type only frames are [PADDING, PING, HANDSHAKE_DONE].
     uint8_t type;
     union {
-        quic_ack_frame_t                ack;
-        quic_rst_stream_frame_t         stream_rst;
-        quic_stop_stream_t              stream_stop;
-        quic_stream_frame_t             stream;
-        quic_new_token_frame_t          new_token;
-        quic_crypto_frame_t             crypto;
-        quic_max_data_frame_t           max_data;
-        quic_max_stream_data_frame_t    max_stream_data;
-        quic_max_streams_frame_t        max_streams;
-        quic_streams_blocked_t          stream_blocked;
-        quic_data_blocked_frame_t       data_blocked;
-        quic_new_conn_id_t              new_conn_id;
-        quic_retire_conn_id_frame_t     retire_conn_id;
-        quic_path_challenge_frame_t     path_challenge;
-        quic_path_response_frame_t      path_challenge_response;
-        quic_conn_close_frame_t         conn_close;
+        quic_ack_frame_t                    ack;
+        quic_rst_stream_frame_t             stream_rst;
+        quic_stop_stream_t                  stream_stop;
+        quic_stream_frame_t                 stream;
+        quic_new_token_frame_t              new_token;
+        quic_crypto_frame_t                 crypto;
+        quic_max_data_frame_t               max_data;
+        quic_max_stream_data_frame_t        max_stream_data;
+        quic_max_streams_frame_t            max_streams;
+        quic_streams_blocked_t              stream_blocked;
+        quic_data_blocked_frame_t           data_blocked;
+        quic_new_conn_id_t                  new_conn_id;
+        quic_retire_conn_id_frame_t         retire_conn_id;
+        quic_path_challenge_frame_t         path_challenge;
+        quic_path_response_frame_t          path_challenge_response;
+        quic_conn_close_frame_t             conn_close;
+        quic_stream_data_blocked_frame_t    stream_data_blocked;
     };
 } quic_frame_t;
 
-quic_frame_parse_result_t quic_parse_frame(const uint8_t *data, size_t len);
-
+quic_frame_parse_result_t quic_parse_frame(const uint8_t *data, size_t len,
+                                       quic_frame_t *out, size_t *consumed)
 
 
 #endif
