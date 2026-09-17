@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdbool.h>
 /*
 Long headers are used for packets that are sent prior to the establishment of 1-RTT 
 keys. Once 1-RTT keys are available, a sender switches to sending packets using the 
@@ -14,6 +15,20 @@ keys are negotiated.
 https://datatracker.ietf.org/doc/html/rfc9000#name-long-header-packets
 
 */
+
+typedef enum{
+    QUIC_PARSE_OK,
+    QUIC_PARSE_INCOMPLETE,      // not enough bytes in buffer yet
+    QUIC_PARSE_ERR_VARINT,      // malformed varint encoding
+    QUIC_PARSE_ERR_FRAME_TYPE,  // unknown/unsupported frame type
+    QUIC_PARSE_ERR_TRUNCATED,   // frame type known, but payload too short
+    QUIC_PARSE_ERR_PROTOCOL,     // value violates a MUST in the RFC (e.g. Retire Prior To > Sequence Number)
+    FRAME_ENCODING_ERROR,
+    FLOW_CONTROL_ERROR
+}quic_parse_status_t;
+
+
+
 
 typedef struct {
     uint8_t header_byte;
@@ -61,13 +76,14 @@ typedef struct {
 
 typedef struct{
     uint64_t    stream_id;
-    uint16_t    application_protocol_error_code;       
+    uint64_t    application_protocol_error_code;       
     uint64_t    final_size;
 }quic_rst_stream_frame_t;
 
 typedef struct{
      uint64_t   stream_id;
-     uint16_t   application_protocol_error_code;  
+     uint64_t   application_protocol_error_code;
+       
 }quic_stop_stream_t;
 
 typedef struct {
@@ -85,7 +101,8 @@ typedef struct {
     uint64_t stream_id;
     uint64_t offset;
     uint64_t length;
-    uint8_t *data;
+    uint8_t  *data;
+    bool     fin;
 } quic_stream_frame_t;
 
 typedef struct {
@@ -114,7 +131,7 @@ typedef struct {
     uint64_t    retire_prior_to;
     uint8_t     length;
     uint8_t     conn_id[20];
-    uint16_t    statless_rst_token;
+    uint8_t stateless_reset_token[16];
 }quic_new_conn_id_t;
 
 typedef struct {
@@ -137,28 +154,45 @@ typedef struct {
 }quic_conn_close_frame_t;
 
 typedef struct {
+    uint64_t stream_id;
+    uint64_t max_stream_data;
+} quic_stream_data_blocked_frame_t;
+
+typedef struct {
     // Type only frames are [PADDING, PING, HANDSHAKE_DONE].
     uint8_t type;
     union {
-        quic_ack_frame_t                ack;
-        quic_rst_stream_frame_t         stream_rst;
-        quic_stop_stream_t              stream_stop;
-        quic_stream_frame_t             max_stream;
-        quic_new_token_frame_t          new_token;
-        quic_crypto_frame_t             crypto;
-        quic_max_data_frame_t           max_data;
-        quic_max_stream_data_frame_t    max_stream_data;
-        quic_max_streams_frame_t        max_streams;
-        quic_streams_blocked_t          stream_blocked;
-        quic_data_blocked_frame_t       data_blocked;
-        quic_new_conn_id_t              new_conn_id;
-        quic_retire_conn_id_frame_t     retire_conn_id;
-        quic_path_challenge_frame_t     path_challenge;
-        quic_path_response_frame_t      path_challenge_response;
-        quic_conn_close_frame_t         conn_close;
+        quic_ack_frame_t                    ack;
+        quic_rst_stream_frame_t             stream_rst;
+        quic_stop_stream_t                  stream_stop;
+        quic_stream_frame_t                 stream;
+        quic_new_token_frame_t              new_token;
+        quic_crypto_frame_t                 crypto;
+        quic_max_data_frame_t               max_data;
+        quic_max_stream_data_frame_t        max_stream_data;
+        quic_max_streams_frame_t            max_streams;
+        quic_streams_blocked_t              stream_blocked;
+        quic_data_blocked_frame_t           data_blocked;
+        quic_new_conn_id_t                  new_conn_id;
+        quic_retire_conn_id_frame_t         retire_conn_id;
+        quic_path_challenge_frame_t         path_challenge;
+        quic_path_response_frame_t          path_challenge_response;
+        quic_conn_close_frame_t             conn_close;
+        quic_stream_data_blocked_frame_t    stream_data_blocked;
     };
 } quic_frame_t;
 
+typedef struct{
+    quic_parse_status_t status;
+    quic_frame_t        frame;
+}quic_frame_parse_result_t;
+
+quic_parse_status_t parse_stream_frame(
+    const uint8_t *data, size_t len, quic_stream_frame_t *out, size_t *body_consumed,
+    bool has_offset, bool has_length, bool has_fin);
+
+quic_frame_parse_result_t quic_parse_frame(const uint8_t *data, size_t len,
+                                       quic_frame_t *out, size_t *consumed);
 
 
 #endif
