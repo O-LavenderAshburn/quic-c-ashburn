@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdbool.h>
 /*
 Long headers are used for packets that are sent prior to the establishment of 1-RTT 
 keys. Once 1-RTT keys are available, a sender switches to sending packets using the 
@@ -21,13 +22,12 @@ typedef enum{
     QUIC_PARSE_ERR_VARINT,      // malformed varint encoding
     QUIC_PARSE_ERR_FRAME_TYPE,  // unknown/unsupported frame type
     QUIC_PARSE_ERR_TRUNCATED,   // frame type known, but payload too short
-    QUIC_PARSE_ERR_PROTOCOL     // value violates a MUST in the RFC (e.g. Retire Prior To > Sequence Number)
+    QUIC_PARSE_ERR_PROTOCOL,     // value violates a MUST in the RFC (e.g. Retire Prior To > Sequence Number)
+    FRAME_ENCODING_ERROR,
+    FLOW_CONTROL_ERROR
 }quic_parse_status_t;
 
-typedef struct{
-    quic_parse_status_t status;
-    quic_frame_t        frame;
-}quic_frame_parse_result_t;
+
 
 
 typedef struct {
@@ -82,7 +82,8 @@ typedef struct{
 
 typedef struct{
      uint64_t   stream_id;
-     uint64_t   application_protocol_error_code;  
+     uint64_t   application_protocol_error_code;
+       
 }quic_stop_stream_t;
 
 typedef struct {
@@ -100,7 +101,8 @@ typedef struct {
     uint64_t stream_id;
     uint64_t offset;
     uint64_t length;
-    uint8_t *data;
+    uint8_t  *data;
+    bool     fin;
 } quic_stream_frame_t;
 
 typedef struct {
@@ -180,8 +182,17 @@ typedef struct {
     };
 } quic_frame_t;
 
+typedef struct{
+    quic_parse_status_t status;
+    quic_frame_t        frame;
+}quic_frame_parse_result_t;
+
+quic_parse_status_t parse_stream_frame(
+    const uint8_t *data, size_t len, quic_stream_frame_t *out, size_t *body_consumed,
+    bool has_offset, bool has_length, bool has_fin);
+
 quic_frame_parse_result_t quic_parse_frame(const uint8_t *data, size_t len,
-                                       quic_frame_t *out, size_t *consumed)
+                                       quic_frame_t *out, size_t *consumed);
 
 
 #endif
