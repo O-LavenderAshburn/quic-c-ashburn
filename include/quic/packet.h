@@ -18,11 +18,11 @@ https://datatracker.ietf.org/doc/html/rfc9000#name-long-header-packets
 
 typedef enum{
     QUIC_PARSE_OK,
-    QUIC_PARSE_INCOMPLETE,      // not enough bytes in buffer yet
+    QUIC_PARSE_INCOMPLETE,      // not enough bytes in buffer yet]
     QUIC_PARSE_ERR_VARINT,      // malformed varint encoding
     QUIC_PARSE_ERR_FRAME_TYPE,  // unknown/unsupported frame type
     QUIC_PARSE_ERR_TRUNCATED,   // frame type known, but payload too short
-    QUIC_PARSE_ERR_PROTOCOL,     // value violates a MUST in the RFC (e.g. Retire Prior To > Sequence Number)
+    QUIC_PARSE_ERR_PROTOCOL,    // value violates a MUST in the RFC (e.g. Retire Prior To > Sequence Number)
     FRAME_ENCODING_ERROR,
     FLOW_CONTROL_ERROR
 }quic_parse_status_t;
@@ -66,13 +66,29 @@ typedef struct {
 
 } quic_short_header_t;
 
-
+typedef struct {
+    uint64_t ect0_count;
+    uint64_t ect1_count;
+    uint64_t ecn_ce_count;
+} quic_ecn_counts_t;
+ 
+// One {Gap, ACK Range Length} pair from the repeated "ACK Range (..) ..."
+// field, RFC 9000 SS19.3.1 / Figure 26.
+typedef struct {
+    uint64_t gap;
+    uint64_t ack_range_length;
+} quic_ack_range_t;
+ 
 typedef struct {
     uint64_t    largest_acknowledged;
     uint64_t    ack_delay;
     uint64_t    ack_range_count;
     uint64_t    first_ack_range;
-} quic_ack_frame_t;
+    quic_ack_range_t *ack_ranges;
+    quic_ecn_counts_t ecn_counts;
+}quic_ack_frame_t;
+
+
 
 typedef struct{
     uint64_t    stream_id;
